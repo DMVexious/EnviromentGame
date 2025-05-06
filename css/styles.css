@@ -1,0 +1,756 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Montserrat', sans-serif;
+    background: linear-gradient(to bottom, #87CEEB, #3498db);
+    color: #333;
+}
+
+#game-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    outline: none;
+}
+
+#error {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #e74c3c;
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 2000;
+    max-width: 80%;
+}
+
+#ui {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+#resources-panel {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 10px;
+    display: flex;
+    gap: 15px;
+    pointer-events: auto;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.resource-icon {
+    display: inline-block;
+    width: 24px;
+    text-align: center;
+    margin-right: 5px;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.resource {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 4px 8px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+#efficiency-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 10px;
+    pointer-events: auto;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    font-weight: bold;
+}
+
+.tab {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    display: flex;
+    pointer-events: auto;
+}
+
+.tablinks {
+    padding: 10px 15px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border: none;
+    border-radius: 10px 10px 0 0;
+    margin-right: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-weight: bold;
+}
+
+.tablinks:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.tablinks.active {
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.1);
+}
+
+#tabcontent {
+    position: absolute;
+    bottom: 60px;
+    left: 10px;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 15px;
+    border-radius: 10px;
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    pointer-events: auto;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.tabcontent {
+    display: none;
+}
+
+.tabcontent.active {
+    display: block;
+}
+
+.tabcontent h3 {
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+
+.tabcontent p {
+    margin-bottom: 8px;
+}
+
+.upgrade-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.upgrade-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f5f5f5;
+    border: 2px solid #2ecc71;
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s; /* More specific transitions */
+    position: relative;
+    overflow: hidden;
+}
+
+.upgrade-button:hover {
+    background-color: #e8f5e9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.upgrade-button:active {
+    transform: translateY(0);
+}
+
+.upgrade-button.disabled {
+    border-color: #95a5a6;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.upgrade-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #2c3e50;
+}
+
+.upgrade-description {
+    font-size: 0.8rem;
+    color: #7f8c8d;
+}
+
+.upgrade-cost {
+    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px 10px;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.upgrade-cost.affordable {
+    color: #2ecc71;
+    border: 1px solid #2ecc71;
+}
+
+.upgrade-cost.not-affordable {
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+}
+
+.upgrade-button::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 20%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(30deg);
+    transition: all 0.65s;
+}
+
+.upgrade-button:hover::after {
+    left: 120%;
+}
+
+.action-button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 5px 0;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.2s;
+}
+
+.action-button:hover {
+    background-color: #2980b9;
+}
+
+.action-button:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
+
+#camera-controls {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    gap: 5px;
+    pointer-events: auto;
+}
+
+.camera-button {
+    background-color: rgba(255, 255, 255, 0.8);
+    border: none;
+    border-radius: 5px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.camera-button:hover {
+    background-color: rgba(255, 255, 255, 1);
+}
+
+#info-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    width: 350px;
+    max-width: 80%;
+    pointer-events: auto;
+}
+
+#info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+}
+
+#info-close {
+    cursor: pointer;
+    font-size: 24px;
+}
+
+#info-panel.hidden {
+    display: none;
+}
+
+.info-popup {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    left: auto;
+    transform: scale(0.9);
+    background-color: white;
+    border-radius: 10px;
+    padding: 0;
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+    z-index: 2000;
+    width: 350px;
+    max-width: 90%;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s; /* More specific transitions */
+    pointer-events: auto;
+}
+
+.info-popup.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.popup-header {
+    background-color: #2ecc71;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.popup-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.popup-content {
+    padding: 20px;
+}
+
+.info-section {
+    margin-bottom: 15px;
+}
+
+.info-section h4 {
+    color: #2c3e50;
+    margin-bottom: 5px;
+    font-size: 1rem;
+}
+
+.info-section p {
+    color: #7f8c8d;
+    line-height: 1.5;
+}
+
+#message-container {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+#message {
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-weight: bold;
+}
+
+#message.visible {
+    opacity: 1;
+}
+
+.floating-text {
+    position: absolute;
+    font-size: 18px;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 1;
+    transition: transform 1s ease, opacity 1s ease;
+    text-shadow: 0px 0px 3px rgba(0, 0, 0, 0.5);
+}
+
+#fps {
+    margin-left: 10px;
+    font-weight: bold;
+}
+/* Add to the end of styles.css */
+
+#status-effects-panel {
+    position: absolute;
+    top: 70px; /* Adjust as needed below resource panel */
+    left: 10px;
+    background-color: rgba(255, 255, 255, 0.85);
+    padding: 8px 12px;
+    border-radius: 8px;
+    width: 200px; /* Adjust width */
+    max-height: 150px; /* Limit height */
+    overflow-y: auto; /* Add scroll if needed */
+    pointer-events: auto;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    z-index: 11; /* Ensure it's above resources if overlapping slightly */
+    font-size: 0.8rem;
+}
+
+#status-effects-panel h4 {
+    margin: 0 0 5px 0;
+    padding-bottom: 3px;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+#status-effects-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#status-effects-list li {
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.status-icon {
+    margin-right: 5px;
+    font-size: 1.1em; /* Make icons slightly larger */
+    width: 1.2em; /* Ensure space for icon */
+    display: inline-block;
+    text-align: center;
+}
+
+.status-debuff {
+    color: #e74c3c; /* Red for debuffs */
+}
+
+.status-buff {
+    color: #2ecc71; /* Green for buffs */
+}
+
+.room-selection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.room-button {
+    padding: 8px 12px;
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.room-button:hover {
+    background-color: #dee2e6;
+}
+
+.room-button.active {
+    background-color: #3498db;
+    color: white;
+    border-color: #2980b9;
+}
+
+#buildings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.building-card {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    transition: box-shadow 0.2s;
+}
+
+.building-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.building-card.selected {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px #3498db;
+}
+
+.building-card.locked {
+    opacity: 0.7;
+}
+
+.building-card h4 {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.building-card p {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 8px;
+}
+
+.view-building-button, .unlock-building-button {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    width: 100%;
+    margin-top: 5px;
+}
+
+.unlock-building-button {
+    background-color: #2ecc71;
+}
+
+.unlock-building-button:hover {
+    background-color: #27ae60;
+}
+
+.progress-bar {
+    background-color: #e9ecef; /* Light grey background */
+    border-radius: 0.25rem;
+    overflow: hidden;
+    height: 1rem; /* Default height */
+    width: 100%; /* Make it take full width of container */
+    margin: 5px 0; 
+}
+
+.progress-fill {
+    background-color: #0d6efd; 
+    height: 100%;
+    width: 0%; 
+    transition: width 0.3s ease-in-out;
+    text-align: center;
+    color: white;
+    font-size: 0.75rem;
+    line-height: 1rem; 
+}
+
+
+.satisfaction-bar {
+    height: 15px; 
+}
+
+.satisfaction-bar .progress-fill {
+    background-color: #198754; 
+}
+
+
+
+.rebirth-progress {
+    margin: 15px 0;
+}
+
+.rebirth-bar {
+    height: 15px;
+    margin: 5px 0;
+}
+
+.rebirth-bar .progress-fill {
+    background-color: #f1c40f; 
+}
+
+#rebirth-bonuses ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+#rebirth-bonuses li {
+    margin-bottom: 5px;
+}
+
+.rebirth-button {
+    background-color: #f1c40f;
+    margin-top: 15px;
+}
+
+.rebirth-button:hover {
+    background-color: #f39c12;
+}
+
+#stats-container p {
+    margin-bottom: 6px;
+}
+
+#resource-history {
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.resource-indicator {
+    margin-bottom: 5px;
+}
+
+.resource-trend {
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+.trend-up { color: #2ecc71; }
+.trend-down { color: #e74c3c; }
+.trend-stable { color: #95a5a6; }
+
+.quests-section {
+    margin-bottom: 20px;
+}
+
+.quests-section h4 {
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.quest-item {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.quest-item.completed {
+    border-left: 4px solid #2ecc71;
+    opacity: 0.8;
+}
+
+.quest-item p {
+    margin-bottom: 5px;
+}
+
+.quest-item strong {
+    color: #34495e;
+}
+
+#resident-list-container {
+    margin-top: 15px;
+}
+
+#resident-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 300px; 
+    overflow-y: auto;
+    padding-right: 10px; 
+}
+
+.resident-card {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px 15px 25px 15px; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 10px; 
+}
+
+.resident-card h4 {
+    margin-bottom: 10px;
+    color: #495057;
+}
+
+.resident-card p {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.resident-card ul {
+    list-style: none;
+    padding-left: 15px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+}
+
+.resident-card li {
+    margin-bottom: 3px;
+}
+
+.job-assignment {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap; 
+}
+
+.job-assignment label {
+    flex-shrink: 0; 
+    margin-right: 5px;
+    font-weight: 600;
+}
+
+.job-select {
+    /* flex-grow: 1; Removed to prevent pushing button */
+    flex-shrink: 1; /* Allow select to shrink if needed */
+    min-width: 80px; /* Prevent shrinking too much */
+    /* Add styles for the assign button within the flex container */
+
+.assign-job-button {
+    flex-shrink: 0; /* Prevent button from shrinking */
+}
+    width: auto; /* Let flexbox determine width */
+    max-width: 140px; /* Constrain max width */
+    min-width: 90px; /* Ensure minimum width */
+    padding: 5px 8px;
+    border: 1px solid #e4e7ea;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.assign-job-button {
+    padding: 5px 10px;
+    font-size: 0.85rem;
+    width: auto; /* Let button size naturally */
+    flex-shrink: 0; /* Ensure button doesn't shrink */
+}
+
+.hidden {
+    display: none !important;
+}

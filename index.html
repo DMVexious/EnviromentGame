@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Building Tycoon</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Load Three.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Load camera manipulation -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /*styles for text and other elements */
+        .floating-text {
+            position: absolute;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 0px 0px 3px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 1;
+            transition: transform 1s ease, opacity 1s ease;
+        }
+        
+        /* resource icons*/
+        .resource-icon {
+            display: inline-block;
+            width: 20px;
+            text-align: center;
+            margin-right: 5px;
+            font-size: 18px;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Canvas for THREE.js  -->
+    <canvas id="game-canvas"></canvas>
+    
+    <!-- Error Display -->
+    <div id="error" style="display: none;"></div>
+    
+    <!-- Game UI -->
+    <div id="ui">
+        <!-- Resources Panel -->
+        <div id="resources-panel">
+            <div class="resource">
+                <span class="resource-icon">$</span>
+                <span id="money-display">0</span>
+            </div>
+            <div class="resource">
+                <span class="resource-icon">⚡</span>
+                <span id="energy-display">100%</span>
+            </div>
+            <div class="resource">
+                <span class="resource-icon">🚿</span>
+                <span id="water-display">100%</span>
+            </div>
+            <div class="resource">
+                <span class="resource-icon">♻️</span>
+                <span id="carbon-display">0</span>
+            </div>
+             <div class="resource">
+                <span class="resource-icon">🍎</span>
+                <span id="food-display">0</span>
+            </div>
+        </div>
+        
+        <div id="status-effects-panel">
+            <h4>Status Effects</h4>
+            <ul id="status-effects-list">
+                
+            </ul>
+        </div>
+        
+        <!-- Efficiency Display -->
+        <div id="efficiency-container">
+            Building Efficiency: <span id="efficiency-value">0%</span>
+        </div>
+        
+        <!-- Tab Nav -->
+        <div class="tab">
+            <button class="tablinks" data-tab="upgrades-tab">Upgrades</button>
+            <button class="tablinks" data-tab="building-tab">Building</button>
+            <button class="tablinks" data-tab="population-tab">Population</button>
+            <button class="tablinks" data-tab="management-tab">Management</button>
+            <button class="tablinks" data-tab="buildings-tab">Buildings</button>
+            <button class="tablinks" data-tab="rebirth-tab">Rebirth</button>
+            <button class="tablinks" data-tab="stats-tab">Stats</button>
+            <button class="tablinks" data-tab="quests-tab">Quests</button>
+        </div>
+        
+        <!-- Tab Content -->
+        <div id="tabcontent">
+            <!-- Upgrades Tab -->
+            <div id="upgrades-tab" class="tabcontent">
+                <div id="upgrades">
+                    <h3>Upgrades</h3>
+                    <!-- Upgrade buttons  -->
+                </div>
+            </div>
+            
+            <!-- Building Tab -->
+            <div id="building-tab" class="tabcontent">
+                <h3>Building Information</h3>
+                <div id="building-info">
+                    <p>Level: <span id="building-level">1</span></p>
+                    <p>Energy Cost: <span id="energy-cost">5.0</span> kWh/s</p>
+                    <p>Water Cost: <span id="water-cost">5.0</span> gal/s</p>
+                    <p>Carbon Bonus: <span id="carbon-bonus">5.0</span> per 100</p>
+                    <p>Passive Income: $<span id="passive-income">0.0</span>/s</p>
+                </div>
+                
+                <div id="building-features">
+                    <h4>Features</h4>
+                    <ul id="features-list">
+
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- New Buildings Tab -->
+            <div id="buildings-tab" class="tabcontent">
+                <h3>City Buildings</h3>
+                <div id="buildings-info">
+                    <p>Expand your green initiatives to other buildings in the city.</p>
+                    <div id="buildings-grid">
+                        <div class="building-card selected" data-building="mainBuilding">
+                            <h4>Main Building</h4>
+                            <p>Your primary building</p>
+                            <p>Level: <span id="main-building-level">1</span></p>
+                            <button class="view-building-button" data-building="mainBuilding">View</button>
+                        </div>
+                        
+                        <div class="building-card locked" data-building="gardenBuilding">
+                            <h4>Garden Building</h4>
+                            <p>Grow food sustainably</p>
+                            <button id="unlock-garden" class="unlock-building-button">Unlock ($15,000)</button>
+                        </div>
+                        
+                        <div class="building-card locked" data-building="wasteManagement">
+                            <h4>Waste Management</h4>
+                            <p>Process and recycle waste</p>
+                            <button id="unlock-waste" class="unlock-building-button">Unlock ($20,000)</button>
+                        </div>
+                        
+                        <div class="building-card locked" data-building="communityCenter">
+                            <h4>Community Center</h4>
+                            <p>Brings people together</p>
+                            <button id="unlock-community" class="unlock-building-button">Unlock ($25,000)</button>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            <!--  Rebirth  -->
+            <div id="rebirth-tab" class="tabcontent">
+                <h3>Rebirth System</h3>
+                <div id="rebirth-info">
+                    <p>Reset your progress to gain permanent bonuses.</p>
+                    <p>Current Rebirth Level: <span id="rebirth-level">0</span></p>
+                    <p>Rebirth Points: <span id="rebirth-points">0</span></p>
+                    <p>Total Rebirths: <span id="total-rebirths">0</span></p>
+                    
+                    <div class="rebirth-progress">
+                        <p>Progress to Next Rebirth:</p>
+                        <div class="progress-bar rebirth-bar">
+                            <div id="rebirth-progress" class="progress-fill"></div>
+                        </div>
+                        <p><span id="current-money"></span> / <span id="rebirth-requirement"></span></p>
+                    </div>
+                    
+                    <div id="rebirth-bonuses">
+                        <h4>Current Bonuses</h4>
+                        <ul>
+                            <li>Income Boost: <span id="income-boost">0%</span></li>
+                            <li>Resource Cap Boost: <span id="resource-boost">0%</span></li>
+                            <li>Efficiency Boost: <span id="efficiency-boost">0%</span></li>
+                            <li>Unlock Boost: <span id="unlock-boost">0%</span></li>
+                        </ul>
+                    </div>
+                    
+                    <button id="rebirth-button" class="action-button rebirth-button">Rebirth</button>
+                </div>
+            </div>
+            
+            <!-- Population Tab  -->
+            <div id="population-tab" class="tabcontent">
+                <h3>Population Overview</h3>
+                <div id="population-info"> 
+                    <p>Current Residents: <span id="residents">0 / 5</span></p> 
+                    <p>Max Residents: <span id="max-residents">5</span></p>
+                    <p>Satisfaction Level: <span id="satisfaction">100%</span></p>
+                    <div class="progress-bar satisfaction-bar">
+                        <div id="satisfaction-bar-fill" class="progress-fill" style="width: 100%;"></div> <!-- Added style for initial width -->
+                    </div>
+                    <p>Income from Rent: $<span id="resident-income">0</span> /s</p>
+                    <p>Avg Resource Consumption:</p>
+                    <ul>
+                        <li>Energy: <span id="avg-resident-energy">0</span> /s per resident</li>
+                        <li>Water: <span id="avg-resident-water">0</span> /s per resident</li>
+                        <li>Food: <span id="avg-resident-food">0</span> /s per resident</li>
+                        <li>Waste: <span id="avg-resident-waste">0</span> /s per resident</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Management  -->
+            <div id="management-tab" class="tabcontent">
+                <h3>Resident Management</h3>
+                <div id="resident-list-container">
+                    <p>Assign jobs to your residents.</p>
+                    <div id="resident-list">
+                        <!-- residents -->
+                    </div>
+                </div>
+                
+                <!-- Stuff Purchases  -->
+                <div id="manual-purchases" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                    <h4>Manual Purchases</h4>
+                    <button id="buy-resident-btn" class="action-button" style="margin-bottom: 5px;">Recruit Resident ($COST)</button>
+                    <button id="buy-max-energy-btn" class="action-button" style="margin-bottom: 5px;">Increase Max Energy ($COST)</button>
+                    <button id="buy-max-water-btn" class="action-button">Increase Max Water ($COST)</button>
+                </div>
+            </div>
+            
+            <!-- Stats Tab -->
+            <div id="stats-tab" class="tabcontent">
+                <h3>Game Statistics</h3>
+                <div id="stats-container">
+                    <p>Total Clicks: <span id="total-clicks">0</span></p>
+                    <p>Money Earned: <span id="total-money-earned">0</span></p>
+                    <p>Passive Income: <span id="stat-passive-income">0</span> per second</p> <!-- Changed ID -->
+                    <p>Building Level: <span id="stat-building-level">1</span></p>
+                    <p>Owned Upgrades: <span id="upgrade-count">0</span></p>
+                    <p>Carbon Offset: <span id="total-carbon-offset">0</span></p>
+                    <p>Total Residents: <span id="stat-residents">0</span></p>
+                </div>
+                
+                <div id="resource-history">
+                    <h4>Resource Trends</h4>
+                    <div class="resource-indicator">
+                        <span>Money: </span>
+                        <span id="money-trend" class="resource-trend trend-up">↑</span>
+                    </div>
+                    <div class="resource-indicator">
+                        <span>Energy: </span>
+                        <span id="energy-trend" class="resource-trend trend-down">↓</span>
+                    </div>
+                    <div class="resource-indicator">
+                        <span>Water: </span>
+                        <span id="water-trend" class="resource-trend trend-stable">→</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Camera Controls -->
+        <div id="camera-controls">
+            <button id="camera-front" class="camera-button">Front View</button>
+            <button id="camera-top" class="camera-button">Top View</button>
+            <button id="camera-side" class="camera-button">Side View</button>
+            <button id="camera-reset" class="camera-button">Reset Camera</button>
+        </div>
+        
+        <!-- Info Panel -->
+        <div id="info-panel" class="hidden">
+            <div id="info-header">
+                <h3 id="info-title">Information</h3>
+                <span id="info-close">&times;</span>
+            </div>
+            <div id="info-content">
+            </div>
+        </div>
+        
+        <!-- Message Display -->
+        <div id="message-container">
+            <div id="message"></div>
+        </div>
+    </div>
+    
+    <!-- Main game  -->
+    <script src="js/game.js"></script>
+</body>
+</html>
