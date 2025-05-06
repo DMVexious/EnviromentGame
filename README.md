@@ -1,1 +1,3 @@
 # EnviromentGame
+
+Hobby project
